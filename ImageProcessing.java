@@ -17,9 +17,9 @@ public class ImageProcessing {
     }
 
     if (img != null) {
-      display(img);
       img = greyScale(img);
-      img = gaussianBlur5(img);
+      img = resize(img);
+      img = gaussianBlur5(gaussianBlur5(img));
       display(img);
       img = edgeDetect(img);
       display(img);
@@ -122,13 +122,18 @@ public class ImageProcessing {
     return blurredImage;
   }
 
+  /**
+   * Detects edges in an image.
+   * @param img The image to detect edges in.
+   * @return The edge-detected image.
+   */
   public static BufferedImage edgeDetect(BufferedImage img) {
     BufferedImage edgeImage = new BufferedImage(img.getWidth(), img.getHeight(), BufferedImage.TYPE_BYTE_GRAY);
     int[][] vertDetect = new int[img.getWidth()][img.getHeight()]; 
     int[][] horizDetect = new int[img.getWidth()][img.getHeight()];
     int[][] edgeDetect = new int[img.getWidth()][img.getHeight()];
     int pixel = 0;
-    int threshold = 8; 
+    int threshold = 10; 
 
     for (int x = 1; x < img.getWidth() - 1; x++) {
       for (int y = 1; y < img.getHeight() - 1; y++) {
@@ -160,6 +165,18 @@ public class ImageProcessing {
     }
 
     return edgeImage;
+  }
+
+  public static BufferedImage resize(BufferedImage img) {
+    if (img.getWidth() < 1000 && img.getHeight() < 1000) {
+      return img;
+    } else {
+      BufferedImage resizedImage = new BufferedImage(img.getWidth() / 2, img.getHeight() / 2, BufferedImage.TYPE_BYTE_GRAY);
+      Graphics converter = resizedImage.getGraphics();
+      converter.drawImage(img, 0, 0, img.getWidth() / 2, img.getHeight() / 2, null);
+      converter.dispose();
+      return resize(resizedImage);
+    }
   }
   
 }
