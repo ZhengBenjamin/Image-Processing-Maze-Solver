@@ -1,53 +1,22 @@
 import java.awt.*;
 import java.awt.image.*;
-import java.io.*;
-import javax.imageio.ImageIO;
-import javax.swing.*;
 
 public class ImageProcessing {
-  
-  public static void main(String[] args) {
-    File file = new File("maze.jpg");
-    BufferedImage img = null; 
 
-    try {
-      img = ImageIO.read(file);
-    } catch (IOException e) { 
-      System.out.println("Error: " + e); 
-    }
-
-    if (img != null) {
-      img = greyScale(img);
-      img = resize(img);
-      img = gaussianBlur5(gaussianBlur5(img));
-      display(img);
-      img = edgeDetect(img);
-      display(img);
-    }
-  }
-
-  /**
-   * Displays an image in a window using a JFrame.
-   * @param img The image to display.
-   */
-  public static void display(BufferedImage img) {
-    JFrame frame = new JFrame();
-    JLabel label = new JLabel(); 
-    
-    frame.setSize(img.getWidth(), img.getHeight());
-    label.setIcon(new ImageIcon(img));
-    frame.getContentPane().add(label, BorderLayout.CENTER);
-    frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-    frame.pack();
-    frame.setVisible(true); 
+  public BufferedImage processImage(BufferedImage img) {
+    BufferedImage processedImage = greyScale(img);
+    processedImage = resize(processedImage);
+    processedImage = gaussianBlur5(processedImage);
+    processedImage = gaussianBlur3(processedImage);
+    processedImage = edgeDetect(processedImage);
+    return processedImage;
   }
 
   /**
    * Converts an image to greyscale.
-   * @param img The image to convert.
    * @return The greyscale image.
    */
-  public static BufferedImage greyScale(BufferedImage img) {
+  public BufferedImage greyScale(BufferedImage img) {
     BufferedImage greyImage = new BufferedImage(img.getWidth(), img.getHeight(), BufferedImage.TYPE_BYTE_GRAY);
     Graphics converter = greyImage.getGraphics();
     converter.drawImage(img, 0, 0, null);
@@ -55,7 +24,7 @@ public class ImageProcessing {
     return greyImage; 
   }
 
-  public static BufferedImage gaussianBlur3(BufferedImage img) {
+  public BufferedImage gaussianBlur3(BufferedImage img) {
     BufferedImage blurredImage = new BufferedImage(img.getWidth() - 2, img.getHeight() - 2, BufferedImage.TYPE_BYTE_GRAY);
     int pixel;
 
@@ -83,7 +52,7 @@ public class ImageProcessing {
    * @param img The image to blur.
    * @return The blurred image.
    */
-  public static BufferedImage gaussianBlur5(BufferedImage img) {
+  public BufferedImage gaussianBlur5(BufferedImage img) {
     BufferedImage blurredImage = new BufferedImage(img.getWidth() - 4, img.getHeight() - 4, BufferedImage.TYPE_BYTE_GRAY);
     int pixel;
 
@@ -127,7 +96,7 @@ public class ImageProcessing {
    * @param img The image to detect edges in.
    * @return The edge-detected image.
    */
-  public static BufferedImage edgeDetect(BufferedImage img) {
+  public BufferedImage edgeDetect(BufferedImage img) {
     BufferedImage edgeImage = new BufferedImage(img.getWidth(), img.getHeight(), BufferedImage.TYPE_BYTE_GRAY);
     int[][] vertDetect = new int[img.getWidth()][img.getHeight()]; 
     int[][] horizDetect = new int[img.getWidth()][img.getHeight()];
@@ -167,16 +136,21 @@ public class ImageProcessing {
     return edgeImage;
   }
 
-  public static BufferedImage resize(BufferedImage img) {
-    if (img.getWidth() < 1000 && img.getHeight() < 1000) {
-      return img;
-    } else {
+  /**
+   * Resizes current image by 0.5x until smaller than 1500x1500 pixels.
+   * @return The resized image.
+   */
+  public BufferedImage resize(BufferedImage img) {
+    if (img.getWidth() > 1500 && img.getHeight() > 1500) {
       BufferedImage resizedImage = new BufferedImage(img.getWidth() / 2, img.getHeight() / 2, BufferedImage.TYPE_BYTE_GRAY);
       Graphics converter = resizedImage.getGraphics();
       converter.drawImage(img, 0, 0, img.getWidth() / 2, img.getHeight() / 2, null);
       converter.dispose();
-      return resize(resizedImage);
+      return resize(resizedImage); //Repeat if still too large
+    } else {
+      return img;
     }
   }
-  
+
 }
+
