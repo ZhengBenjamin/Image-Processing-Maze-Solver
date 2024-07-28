@@ -42,6 +42,22 @@ public class UI {
   }
 
   /**
+   * Gets the starting point of the maze.
+   * @return The starting point of the maze.
+   */
+  public int[] getStartingPoint() {
+    return startingPoint;
+  }
+
+  /**
+   * Gets the ending point of the maze.
+   * @return The ending point of the maze.
+   */
+  public int[] getEndingPoint() {
+    return endingPoint;
+  }
+
+  /**
    * Renders the starting UI. Prompts user to select an image.
    */
   private void renderStartingUI() {
@@ -147,6 +163,9 @@ public class UI {
     window.revalidate();
   }
 
+  /**
+   * Prompts the user with sliders representing the starting and ending points of the maze 
+   */
   private void promptSelectPoints() {
     JPanel selectPoints = new JPanel(); 
     JSlider startingX = new JSlider(0, processedImage.getWidth() - 1, startingPoint[0]);
@@ -181,6 +200,9 @@ public class UI {
     });
   }
 
+  /**
+   * Renders the selected points on the image
+   */
   private void renderSelectedPoints() {
     markedImage = new BufferedImage(processedImage.getWidth() + 10, processedImage.getHeight() + 10, BufferedImage.TYPE_INT_ARGB);
     Graphics g = markedImage.getGraphics();
@@ -214,6 +236,10 @@ public class UI {
     
   }
 
+  /**
+   * Helper method to render an image in a JFrame.
+   * @param img The image to render.
+   */
   private void renderImage(BufferedImage img) {
     testFrame.remove(testLabel);
     testLabel = new JLabel(); 
