@@ -4,11 +4,11 @@ import java.awt.image.*;
 public class ImageProcessing {
 
   public BufferedImage processImage(BufferedImage img) {
-    BufferedImage processedImage = greyScale(img);
-    processedImage = resize(processedImage);
+    BufferedImage processedImage = resize(img);
     processedImage = gaussianBlur5(processedImage);
     processedImage = gaussianBlur3(processedImage);
     processedImage = edgeDetect(processedImage);
+    processedImage = greyScale(processedImage);
     return processedImage;
   }
 
@@ -141,8 +141,8 @@ public class ImageProcessing {
    * @return The resized image.
    */
   public BufferedImage resize(BufferedImage img) {
-    if (img.getWidth() > 1500 && img.getHeight() > 1500) {
-      BufferedImage resizedImage = new BufferedImage(img.getWidth() / 2, img.getHeight() / 2, BufferedImage.TYPE_BYTE_GRAY);
+    if (img.getWidth() > 800 || img.getHeight() > 1000) {
+      BufferedImage resizedImage = new BufferedImage(img.getWidth() / 2, img.getHeight() / 2, BufferedImage.TYPE_INT_ARGB);
       Graphics converter = resizedImage.getGraphics();
       converter.drawImage(img, 0, 0, img.getWidth() / 2, img.getHeight() / 2, null);
       converter.dispose();
