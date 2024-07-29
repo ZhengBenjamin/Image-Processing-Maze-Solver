@@ -18,7 +18,6 @@ public class UI {
 
   private JFrame testFrame = new JFrame("Test"); 
   private JLabel testLabel = new JLabel(); 
-    private int x;
 
   /**
    * Constructor for the UI class.
@@ -111,9 +110,8 @@ public class UI {
       });
 
     solveButton.addActionListener(e -> { // Solves the maze 
-      MazeSolver solver = new MazeSolver(processedImage);
-      solver.solve();
-      renderSolution();
+      MazeSolver solver = new MazeSolver(processedImage, 2, startingPoint, endingPoint);
+      // renderSolution();
     });
 
     resetButton.addActionListener(e -> { // Resets the maze 
