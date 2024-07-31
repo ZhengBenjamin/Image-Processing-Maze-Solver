@@ -26,7 +26,7 @@ public class MazeSolver {
     public Node(int x, int y, Node neighbor) {
       this.x = x;
       this.y = y;
-      addNeighbor(neighbor);
+      // addNeighbor(neighbor);
     }
 
     /**
@@ -78,8 +78,10 @@ public class MazeSolver {
   private int pixelSize; 
   private int[] startingPoint;
   private int[] endingPoint;
-  private HashSet<Node> nodes = new HashSet<>(); 
-  private Queue<Node> queue = new LinkedList<>();
+  private Node startingNode;
+  private Node endingNode;
+  private ArrayList<Node> nodes = new ArrayList<>(); 
+  
 
   /**
    * Constructor for the MazeSolver class.
@@ -95,32 +97,29 @@ public class MazeSolver {
     this.endingPoint = endingPoint;
 
     generateNodes(); 
+    setNeighbors();
     validateNodes(); 
+    findEndpoints();
   }
 
   /**
    * Generates nodes starting from the starting point.
    */
   private void generateNodes() {
-    Node start = new Node(startingPoint[0], startingPoint[1]);
-    System.out.println("StartingNode: " + Integer.toString(startingPoint[0]) + ", " + Integer.toString(startingPoint[1]));
-    start.addNeighbor(genPosXNodes(startingPoint[0], startingPoint[1], start));
-    start.addNeighbor(genNegXNodes(startingPoint[0], startingPoint[1], start));
-    nodes.add(start);
+    Node node = new Node(0, 0);
+    System.out.println("Generating Nodes");
+    node.addNeighbor(genXNodes(0, 0, node));
+    nodes.add(node);
     
     //Now that all nodes have been generated in the X direction, we can generate nodes in the Y direction
-    HashSet<Node> horizontalNodes = new HashSet<>(); 
-    for (Node node : nodes) {
-      horizontalNodes.add(node);
+    ArrayList<Node> horizontalNodes = new ArrayList<>(); 
+    for (Node n : nodes) {
+      horizontalNodes.add(n);
     }
     
-    for (Node node : horizontalNodes) {
-      node.addNeighbor(genPosYNodes(node.getX(), node.getY(), node));
-      node.addNeighbor(genNegYNodes(node.getX(), node.getY(), node));
+    for (Node n : horizontalNodes) {
+      n.addNeighbor(genYNodes(n.getX(), n.getY(), n));
     }
-    
-    System.out.println(nodes.size());
-    System.out.println(Integer.toString(img.getWidth()) + Integer.toString(img.getHeight()) + " Tot Pixels = " + (img.getWidth() * img.getHeight()));
   }
 
   /**
@@ -128,7 +127,9 @@ public class MazeSolver {
    */
   private void validateNodes() {
 
-    HashSet<Node> validatedNodes = new HashSet<>(); //Nodes that are valid
+    System.out.println("Validating Nodes");
+    // ArrayList<Node> validatedNodes = new ArrayList<>(); //Nodes that are valid
+    HashSet<Node> validatedNodes = new HashSet<>();
     
     for (Node node : nodes) { 
       validatedNodes.add(node);
@@ -139,9 +140,8 @@ public class MazeSolver {
 
         for (int x = node.getX(); x < node.getX() + pixelSize; x++) {
           for (int y = node.getY(); y < node.getY() + pixelSize; y++) {
-            System.out.println("Checking pixel at: " + Integer.toString(x) + " , " + Integer.toString(y) + ": " + Integer.toString(img.getRGB(x, y)));
+            System.out.println("Validating Node: " + Integer.toString(x) + " , " + Integer.toString(y));
             if (img.getRGB(x, y) != -1) {
-              System.out.println(false);
               valid = false;
               break;
             }
@@ -154,7 +154,88 @@ public class MazeSolver {
         }        
     }
 
-    nodes = validatedNodes; //Copy the validated nodes back to the original list of nodes
+    nodes = new ArrayList<>();
+    nodes.addAll(validatedNodes); //Copy the validated nodes back to the original list of nodes
+  }
+
+  /**
+   * Finds the starting and ending nodes in the maze.
+   */
+  private void findEndpoints() {
+    System.out.println("Finding Endpoints");
+    for (Node node : nodes) {
+      if (Math.abs(node.getX() - startingPoint[0]) <= pixelSize && Math.abs(node.getY() - startingPoint[1]) <= pixelSize) {
+        startingNode = node;
+      } 
+
+      if (Math.abs(node.getX() - endingPoint[0]) <= pixelSize && Math.abs(node.getY() - endingPoint[1]) <= pixelSize) {
+        endingNode = node;
+      }
+
+      if (startingNode != null && endingNode != null) {
+        break;
+      }
+    }
+
+    System.out.println("Found starting node: " + Integer.toString(startingNode.getX()) + " , " + Integer.toString(startingNode.getY()));
+    System.out.println("Starting Point: " + Integer.toString(startingPoint[0]) + " , " + Integer.toString(startingPoint[1]));
+    System.out.println("Found ending node: " + Integer.toString(endingNode.getX()) + " , " + Integer.toString(endingNode.getY()));
+    System.out.println("Ending Point: " + Integer.toString(endingPoint[0]) + " , " + Integer.toString(endingPoint[1]));
+  }
+
+  public int[][] solve() {
+    Node[] prev = findPath();
+    ArrayList<Node> nodePath = reconstructPath(prev);
+    int[][] coordPath = new int[nodePath.size()][2];
+
+    for (int i = 0; i < nodePath.size(); i++) {
+      coordPath[i][0] = nodePath.get(i).getX();
+      coordPath[i][1] = nodePath.get(i).getY();
+    }
+    
+    return coordPath;
+  }
+
+  private Node[] findPath() {
+    Queue<Node> queue = new LinkedList<>(); //Queue to store nodes to visit
+    HashSet<Node> visited = new HashSet<>(); //Set to store visited nodes
+    queue.add(startingNode); 
+    visited.add(startingNode);
+    Node[] prev = new Node[nodes.size()]; //Array to store the previous node in the path
+    Arrays.fill(prev, null); //Fill the array with nulls
+
+    while (!queue.isEmpty()) {
+      Node current = queue.remove();
+      for (Node neighbor : current.getNeighbors()) {
+        if (!visited.contains(neighbor)) {
+          System.out.println("Visiting: " + Integer.toString(neighbor.getX()) + " , " + Integer.toString(neighbor.getY()));
+          queue.add(neighbor);
+          visited.add(neighbor);
+          prev[nodes.indexOf(neighbor)] = current;
+          if (neighbor.equals(endingNode)) {
+            System.out.println("Found Ending Node");
+            return prev;
+          }
+        }
+      }
+    }
+
+    return prev;
+  }
+
+  private ArrayList<Node> reconstructPath(Node[] prev) {
+    ArrayList<Node> path = new ArrayList(); 
+    for (Node at = endingNode; at != null; at = prev[nodes.indexOf(at)]) {
+      path.add(at);
+    }
+
+    Collections.reverse(path);
+
+    if (path.get(0) == startingNode) {
+      return path;
+    } else {
+      return null;
+    }
   }
   
   /**
@@ -164,33 +245,12 @@ public class MazeSolver {
    * @param neighbor The neighbor of the node.
    * @return The node generated.
    */
-  private Node genPosXNodes(int x, int y, Node neighbor) {
+  private Node genXNodes(int x, int y, Node neighbor) {
       if (x + pixelSize < img.getWidth() - 1) {
         Node node = new Node(x + pixelSize, y);
         node.addNeighbor(neighbor);
-        node.addNeighbor(genPosXNodes(x + pixelSize, y, node));
+        node.addNeighbor(genXNodes(x + pixelSize, y, node));
         nodes.add(node);
-        System.out.println("xPos Added node at: " + Integer.toString(x + pixelSize) + " , " + Integer.toString(y));
-        return node; 
-      } else {
-        return null;
-      }
-    }
-
-    /**
-     * Generates nodes in the negative X direction.
-     * @param x The x-coordinate of the node.
-     * @param y The y-coordinate of the node.
-     * @param neighbor The neighbor of the node.
-     * @return The node generated.
-     */
-    private Node genNegXNodes(int x, int y, Node neighbor) {
-      if (x - pixelSize >= 0) {
-        Node node = new Node(x - pixelSize, y);
-        node.addNeighbor(neighbor);
-        node.addNeighbor(genNegXNodes(x - pixelSize, y, node));
-        nodes.add(node);
-        System.out.println("xNeg Added node at: " + Integer.toString(x - pixelSize) + " , " + Integer.toString(y));
         return node; 
       } else {
         return null;
@@ -204,36 +264,43 @@ public class MazeSolver {
      * @param neighbor The neighbor of the node.
      * @return The node generated.
      */
-    private Node genPosYNodes(int x, int y, Node neighbor) {
+    private Node genYNodes(int x, int y, Node neighbor) {
       if (y + pixelSize < img.getHeight() - 1) {
         Node node = new Node(x, y + pixelSize);
         node.addNeighbor(neighbor);
-        node.addNeighbor(genPosYNodes(x, y + pixelSize, node));
+        node.addNeighbor(genYNodes(x, y + pixelSize, node));
         nodes.add(node);
-        System.out.println("yPos Added node at: " + Integer.toString(x) + " , " + Integer.toString(y + pixelSize));
         return node; 
       } else {
         return null;
       }
     }
 
-    /**
-     * Generates nodes in the negative Y direction.
-     * @param x The x-coordinate of the node.
-     * @param y The y-coordinate of the node.
-     * @param neighbor The neighbor of the node.
-     * @return The node generated.
-     */
-    private Node genNegYNodes(int x, int y, Node neighbor) {
-      if (y - pixelSize >= 0) {
-        Node node = new Node(x, y - pixelSize);
-        node.addNeighbor(neighbor);
-        node.addNeighbor(genNegYNodes(x, y - pixelSize, node));
-        nodes.add(node);
-        System.out.println("yNeg Added node at: " + Integer.toString(x) + " , " + Integer.toString(y - pixelSize));
-        return node; 
-      } else {
-        return null;
+    private void setNeighbors() {
+      Node[] nodeArray = nodes.toArray(new Node[nodes.size()]); //Converts the list of nodes to an array
+      int offsetIndex = (int) Math.floor(img.getHeight() / pixelSize) - 1; //The offset index to get the node to the right of the current node
+
+      for (int i = 0; i < nodeArray.length; i++) {
+        Node node = nodeArray[i];
+        if (node.getY() != 0 && i + offsetIndex < nodeArray.length) {
+          node.addNeighbor(nodeArray[i + offsetIndex]);
+          nodeArray[i + offsetIndex].addNeighbor(node);
+        }
       }
+      
+      nodes = new ArrayList<Node>(Arrays.asList(nodeArray));
+      System.out.println("Set Neighbors: num of nodes: " + Integer.toString(nodes.size()));
+    }
+
+    private void printNeighbors() {
+      // for (Node node : nodes) {
+      //   System.out.println("Node: " + Integer.toString(node.getX()) + " , " + Integer.toString(node.getY()) + " Index: " + Integer.toString(nodes.indexOf(node)));
+      //   for (Node neighbor : node.getNeighbors()) {
+      //     System.out.println("  Neighbor: " + Integer.toString(neighbor.getX()) + " , " + Integer.toString(neighbor.getY()));
+      //   }
+      // }
+      // System.out.println("Resolution: " + Integer.toString(img.getWidth()) + " , " + Integer.toString(img.getHeight()));
+
+      nodes.forEach(node -> System.out.println("Node: " + Integer.toString(node.getX()) + " , " + Integer.toString(node.getY()) + " Neighbors " + Integer.toString(node.getNeighbors().size())));
     }
 }

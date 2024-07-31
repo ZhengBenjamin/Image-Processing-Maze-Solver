@@ -9,8 +9,10 @@ public class UI {
 
   private final JFrame window;
   private final ImageProcessing imageProcessor = new ImageProcessing(); 
+  private MazeSolver solver; 
   private BufferedImage originalImage; 
   private BufferedImage processedImage; 
+  private BufferedImage edgeDetectImage; 
   private BufferedImage markedImage; 
   private JPanel imagePanel; 
   private int[] startingPoint = new int[]{0, 0};
@@ -36,7 +38,9 @@ public class UI {
    */
   public void setImage(BufferedImage img) {
     this.originalImage = imageProcessor.resize(img);
-    processedImage = imageProcessor.processImage(img);
+    edgeDetectImage = imageProcessor.processImage(img);
+    // processedImage = imageProcessor.preprocessImage(img);
+    // renderImage(processedImage);
     renderImage(); 
   }
 
@@ -110,8 +114,8 @@ public class UI {
       });
 
     solveButton.addActionListener(e -> { // Solves the maze 
-      MazeSolver solver = new MazeSolver(processedImage, 2, startingPoint, endingPoint);
-      // renderSolution();
+      solver = new MazeSolver(edgeDetectImage, 1, startingPoint, endingPoint);
+      renderSolution(solver.solve());
     });
 
     resetButton.addActionListener(e -> { // Resets the maze 
@@ -149,7 +153,7 @@ public class UI {
       imagePanel.add(markedLabel);
       System.out.println("Marked Image");
     } else {
-      processedLabel.setIcon(new ImageIcon(processedImage));
+      processedLabel.setIcon(new ImageIcon(edgeDetectImage));
       imagePanel.add(processedLabel);
       System.out.println("Processed Image");
     }
@@ -166,10 +170,10 @@ public class UI {
    */
   private void promptSelectPoints() {
     JPanel selectPoints = new JPanel(); 
-    JSlider startingX = new JSlider(0, processedImage.getWidth() - 1, startingPoint[0]);
-    JSlider startingY = new JSlider(0, processedImage.getHeight() - 1, startingPoint[1]);
-    JSlider endingX = new JSlider(0, processedImage.getWidth() - 1, endingPoint[0]);
-    JSlider endingY = new JSlider(0, processedImage.getHeight() - 1, endingPoint[1]);
+    JSlider startingX = new JSlider(0, edgeDetectImage.getWidth() - 1, startingPoint[0]);
+    JSlider startingY = new JSlider(0, edgeDetectImage.getHeight() - 1, startingPoint[1]);
+    JSlider endingX = new JSlider(0, edgeDetectImage.getWidth() - 1, endingPoint[0]);
+    JSlider endingY = new JSlider(0, edgeDetectImage.getHeight() - 1, endingPoint[1]);
 
     selectPoints.add(startingX);
     selectPoints.add(startingY);
@@ -202,9 +206,9 @@ public class UI {
    * Renders the selected points on the image
    */
   private void renderSelectedPoints() {
-    markedImage = new BufferedImage(processedImage.getWidth() + 10, processedImage.getHeight() + 10, BufferedImage.TYPE_INT_ARGB);
+    markedImage = new BufferedImage(edgeDetectImage.getWidth() + 10, edgeDetectImage.getHeight() + 10, BufferedImage.TYPE_INT_ARGB);
     Graphics g = markedImage.getGraphics();
-    g.drawImage(processedImage, 0, 0, null);
+    g.drawImage(edgeDetectImage, 0, 0, null);
     g.dispose(); 
     
     for (int x = startingPoint[0]; x < startingPoint[0] + 10; x++) {
@@ -230,8 +234,17 @@ public class UI {
   /**
    * Renders the solution to the maze 
    */
-  private void renderSolution() {
-    
+  private void renderSolution(int[][] solutionCoords) {
+    BufferedImage solutionImage = new BufferedImage(edgeDetectImage.getWidth(), edgeDetectImage.getHeight(), BufferedImage.TYPE_INT_ARGB);
+    Graphics g = solutionImage.getGraphics();
+    g.drawImage(originalImage, 0, 0, null);
+    g.dispose();
+
+    for (int[] coord : solutionCoords) {
+      solutionImage.setRGB(coord[0], coord[1], Color.BLUE.getRGB());
+    }
+
+    renderImage(solutionImage);
   }
 
   /**
