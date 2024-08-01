@@ -4,11 +4,18 @@ import java.awt.image.*;
 public class ImageProcessing {
 
   public BufferedImage processImage(BufferedImage img) {
-    BufferedImage processedImage = resize(img);
-    processedImage = gaussianBlur5(processedImage);
-    processedImage = gaussianBlur3(processedImage);
-    processedImage = edgeDetect(processedImage);
+    BufferedImage processedImage = img;
     processedImage = greyScale(processedImage);
+    processedImage = resize(processedImage);
+    processedImage = edgeDetect(processedImage);
+    return processedImage;
+  }
+
+  public BufferedImage preprocessImage(BufferedImage img) {
+    BufferedImage processedImage = gaussianBlur5(img);
+    processedImage = gaussianBlur3(processedImage);
+    processedImage = greyScale(processedImage);
+    processedImage = resize(processedImage);
     return processedImage;
   }
 
@@ -102,7 +109,7 @@ public class ImageProcessing {
     int[][] horizDetect = new int[img.getWidth()][img.getHeight()];
     int[][] edgeDetect = new int[img.getWidth()][img.getHeight()];
     int pixel = 0;
-    int threshold = 10; 
+    int threshold = 15; 
 
     for (int x = 1; x < img.getWidth() - 1; x++) {
       for (int y = 1; y < img.getHeight() - 1; y++) {
@@ -128,7 +135,6 @@ public class ImageProcessing {
           pixel = 0;
         }
         
-        System.out.println(Integer.toString(x) + " , " + Integer.toString(y) + " : " + Integer.toString(img.getWidth()) + " , " + Integer.toString(img.getHeight()));
         edgeImage.setRGB(x, y, pixel);
       }
     }
@@ -141,7 +147,7 @@ public class ImageProcessing {
    * @return The resized image.
    */
   public BufferedImage resize(BufferedImage img) {
-    if (img.getWidth() > 800 || img.getHeight() > 1000) {
+    if (img.getWidth() > 2000 || img.getHeight() > 2000) {
       BufferedImage resizedImage = new BufferedImage(img.getWidth() / 2, img.getHeight() / 2, BufferedImage.TYPE_INT_ARGB);
       Graphics converter = resizedImage.getGraphics();
       converter.drawImage(img, 0, 0, img.getWidth() / 2, img.getHeight() / 2, null);

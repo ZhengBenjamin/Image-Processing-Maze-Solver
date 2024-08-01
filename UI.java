@@ -211,14 +211,14 @@ public class UI {
     g.drawImage(edgeDetectImage, 0, 0, null);
     g.dispose(); 
     
-    for (int x = startingPoint[0]; x < startingPoint[0] + 10; x++) {
-      for (int y = startingPoint[1]; y < startingPoint[1] + 10; y++) {
+    for (int x = startingPoint[0]; x < startingPoint[0] + 5; x++) {
+      for (int y = startingPoint[1]; y < startingPoint[1] + 5; y++) {
         markedImage.setRGB(x, y, Color.GREEN.getRGB());
       }
     }
 
-    for (int x = endingPoint[0]; x < endingPoint[0] + 10; x++) {
-      for (int y = endingPoint[1]; y < endingPoint[1] + 10; y++) {
+    for (int x = endingPoint[0]; x < endingPoint[0] + 5; x++) {
+      for (int y = endingPoint[1]; y < endingPoint[1] + 5; y++) {
         markedImage.setRGB(x, y, Color.RED.getRGB());
       }
     }
@@ -241,7 +241,11 @@ public class UI {
     g.dispose();
 
     for (int[] coord : solutionCoords) {
-      solutionImage.setRGB(coord[0], coord[1], Color.BLUE.getRGB());
+      for (int x = coord[0]; x < coord[0] + 3; x++) {
+        for (int y = coord[1]; y < coord[1] + 3; y++) {
+          solutionImage.setRGB(x, y, Color.BLUE.getRGB());
+        }
+      }
     }
 
     renderImage(solutionImage);
