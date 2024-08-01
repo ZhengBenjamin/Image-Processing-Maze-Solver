@@ -6,7 +6,7 @@ public class ImageProcessing {
   public BufferedImage processImage(BufferedImage img) {
     BufferedImage processedImage = img;
     processedImage = greyScale(processedImage);
-    processedImage = resize(processedImage);
+    processedImage = resize(processedImage, 1000, 1000);
     processedImage = edgeDetect(processedImage);
     return processedImage;
   }
@@ -15,8 +15,36 @@ public class ImageProcessing {
     BufferedImage processedImage = gaussianBlur5(img);
     processedImage = gaussianBlur3(processedImage);
     processedImage = greyScale(processedImage);
-    processedImage = resize(processedImage);
+    processedImage = resize(processedImage, 1000, 1000);
     return processedImage;
+  }
+
+  public BufferedImage contrastDetect(BufferedImage img) {
+    BufferedImage contrastImage = resize(img, 1000, 1000);
+    int averagePixel = 0;
+
+    for (int x = 0; x < contrastImage.getWidth(); x++) {
+      for (int y = 0; y < contrastImage.getHeight(); y++) {
+        averagePixel += (int)(contrastImage.getRGB(x, y) & 0xFF);
+      }  
+    }
+
+    averagePixel = averagePixel / (contrastImage.getWidth() * contrastImage.getHeight());
+
+    for (int x = 0; x < contrastImage.getWidth(); x++) {
+      for (int y = 0; y < contrastImage.getHeight(); y++) {
+        int pixel = (int)(contrastImage.getRGB(x, y) & 0xFF);
+        if (pixel > averagePixel) {
+          pixel = 255;
+        } else {
+          pixel = 0;
+        }
+        int argb = (255<<24) | (pixel << 16) | (pixel << 8) | pixel;
+        contrastImage.setRGB(x, y, argb);
+      }
+    }
+
+    return contrastImage; 
   }
 
   /**
@@ -143,19 +171,21 @@ public class ImageProcessing {
   }
 
   /**
-   * Resizes current image by 0.5x until smaller than 1500x1500 pixels.
+   * Resizes current image to desired width and height.
+   * @param img The image to resize.
+   * @param width The desired width.
+   * @param height The desired height.
    * @return The resized image.
    */
-  public BufferedImage resize(BufferedImage img) {
-    if (img.getWidth() > 2000 || img.getHeight() > 2000) {
-      BufferedImage resizedImage = new BufferedImage(img.getWidth() / 2, img.getHeight() / 2, BufferedImage.TYPE_INT_ARGB);
-      Graphics converter = resizedImage.getGraphics();
-      converter.drawImage(img, 0, 0, img.getWidth() / 2, img.getHeight() / 2, null);
-      converter.dispose();
-      return resize(resizedImage); //Repeat if still too large
-    } else {
-      return img;
-    }
+  public BufferedImage resize(BufferedImage img, int width, int height) {
+    Image tmp = img.getScaledInstance(width, height, Image.SCALE_SMOOTH);
+    BufferedImage resizedImage = new BufferedImage(width, height, BufferedImage.TYPE_BYTE_GRAY);
+
+    Graphics2D converter = resizedImage.createGraphics();
+    converter.drawImage(tmp, 0, 0, null);
+    converter.dispose();
+
+    return resizedImage;
   }
 
 }
