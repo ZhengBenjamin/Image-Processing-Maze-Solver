@@ -37,8 +37,8 @@ public class UI {
    * @param img The image to be solved
    */
   public void setImage(BufferedImage img) {
-    this.originalImage = imageProcessor.resize(img);
-    edgeDetectImage = imageProcessor.processImage(img);
+    this.originalImage = imageProcessor.resize(img, 1000, 1000);
+    edgeDetectImage = imageProcessor.contrastDetect(img);
     // processedImage = imageProcessor.preprocessImage(img);
     // renderImage(processedImage);
     renderImage(); 
@@ -114,7 +114,14 @@ public class UI {
       });
 
     solveButton.addActionListener(e -> { // Solves the maze 
-      solver = new MazeSolver(edgeDetectImage, 1, startingPoint, endingPoint);
+      int[][] coordPath = new int[0][0];
+      int pixelSize = 3; 
+      
+      while (coordPath.length == 0 && pixelSize >= 1) {
+        solver = new MazeSolver(edgeDetectImage, pixelSize, startingPoint, endingPoint);
+        pixelSize -= 1;
+      }
+
       renderSolution(solver.solve());
     });
 
@@ -257,6 +264,7 @@ public class UI {
    */
   private void renderImage(BufferedImage img) {
     testFrame.remove(testLabel);
+    testFrame.setSize(img.getWidth(), img.getHeight());
     testLabel = new JLabel(); 
     testLabel.setIcon(new ImageIcon(img));
     testFrame.add(testLabel);
