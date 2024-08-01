@@ -186,14 +186,19 @@ public class MazeSolver {
   public int[][] solve() {
     Node[] prev = findPath();
     ArrayList<Node> nodePath = reconstructPath(prev);
-    int[][] coordPath = new int[nodePath.size()][2];
 
-    for (int i = 0; i < nodePath.size(); i++) {
-      coordPath[i][0] = nodePath.get(i).getX();
-      coordPath[i][1] = nodePath.get(i).getY();
-    }
-    
-    return coordPath;
+    if (nodePath != null) {
+      int[][] coordPath = new int[nodePath.size()][2];
+
+      for (int i = 0; i < nodePath.size(); i++) {
+        coordPath[i][0] = nodePath.get(i).getX();
+        coordPath[i][1] = nodePath.get(i).getY();
+      }
+      
+      return coordPath;
+    } 
+
+    return null;
   }
 
   private Node[] findPath() {
