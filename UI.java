@@ -37,10 +37,12 @@ public class UI {
    * @param img The image to be solved
    */
   public void setImage(BufferedImage img) {
-    this.originalImage = imageProcessor.resize(img, 1000, 1000);
+    if (img.getWidth() > 900 || img.getHeight() > 900) {
+      this.originalImage = imageProcessor.resize(img, 900, 900);
+    } else {
+      this.originalImage = img; 
+    }
     edgeDetectImage = imageProcessor.contrastDetect(img);
-    // processedImage = imageProcessor.preprocessImage(img);
-    // renderImage(processedImage);
     renderImage(); 
   }
 
@@ -114,15 +116,20 @@ public class UI {
       });
 
     solveButton.addActionListener(e -> { // Solves the maze 
-      int[][] coordPath = new int[0][0];
+      int[][] coordPath = null;
       int pixelSize = 3; 
       
-      while (coordPath.length == 0 && pixelSize >= 1) {
+      while (coordPath == null && pixelSize >= 1) {
         solver = new MazeSolver(edgeDetectImage, pixelSize, startingPoint, endingPoint);
+        coordPath = solver.solve(); 
         pixelSize -= 1;
       }
-
-      renderSolution(solver.solve());
+      
+      try {
+        renderSolution(solver.solve());
+      } catch (NullPointerException ex) {
+        System.out.println("No solution found");
+      }
     });
 
     resetButton.addActionListener(e -> { // Resets the maze 
@@ -181,11 +188,13 @@ public class UI {
     JSlider startingY = new JSlider(0, edgeDetectImage.getHeight() - 1, startingPoint[1]);
     JSlider endingX = new JSlider(0, edgeDetectImage.getWidth() - 1, endingPoint[0]);
     JSlider endingY = new JSlider(0, edgeDetectImage.getHeight() - 1, endingPoint[1]);
+    JCheckBox useEdgeDetection = new JCheckBox("Use Edge Detection (For Photos)");
 
     selectPoints.add(startingX);
     selectPoints.add(startingY);
     selectPoints.add(endingX);
     selectPoints.add(endingY);
+    selectPoints.add(useEdgeDetection);
     window.add(selectPoints, BorderLayout.CENTER);
 
     startingX.addChangeListener(e -> {
@@ -207,6 +216,16 @@ public class UI {
       endingPoint[1] = endingY.getValue();
       renderSelectedPoints();
     });
+
+    useEdgeDetection.addActionListener(e -> {
+      if (useEdgeDetection.isSelected()) {
+        edgeDetectImage = imageProcessor.processImage(originalImage);
+      } else {
+        edgeDetectImage = imageProcessor.contrastDetect(originalImage);
+      }
+      renderImage();
+    });
+
   }
 
   /**
