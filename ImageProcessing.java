@@ -3,11 +3,19 @@ import java.awt.image.*;
 
 public class ImageProcessing {
 
-  public BufferedImage processImage(BufferedImage img) {
+  public BufferedImage processImage(BufferedImage img, int edgeDetectThreshold) {
     BufferedImage processedImage = img;
     processedImage = greyScale(processedImage);
-    processedImage = resize(processedImage, 1000, 1000);
-    processedImage = edgeDetect(processedImage);
+    processedImage = gaussianBlur5(processedImage);
+
+    if (img.getWidth() > 900 || img.getHeight() > 900) {
+      processedImage = resize(processedImage, 900);   
+    }
+
+    processedImage = gaussianBlur3(processedImage);
+    processedImage = edgeDetect(processedImage, edgeDetectThreshold);
+
+    System.out.println("Processed Edge Detection");
     return processedImage;
   }
 
@@ -15,36 +23,35 @@ public class ImageProcessing {
     BufferedImage processedImage = gaussianBlur5(img);
     processedImage = gaussianBlur3(processedImage);
     processedImage = greyScale(processedImage);
-    processedImage = resize(processedImage, 1000, 1000);
+    processedImage = resize(processedImage, 900);
     return processedImage;
   }
 
   public BufferedImage contrastDetect(BufferedImage img) {
-    BufferedImage contrastImage = resize(img, 1000, 1000);
+    BufferedImage temp = greyScale(img); 
+    BufferedImage processedImage = new BufferedImage(img.getWidth(), img.getHeight(), BufferedImage.TYPE_BYTE_GRAY);
     int averagePixel = 0;
 
-    for (int x = 0; x < contrastImage.getWidth(); x++) {
-      for (int y = 0; y < contrastImage.getHeight(); y++) {
-        averagePixel += (int)(contrastImage.getRGB(x, y) & 0xFF);
-      }  
-    }
-
-    averagePixel = averagePixel / (contrastImage.getWidth() * contrastImage.getHeight());
-
-    for (int x = 0; x < contrastImage.getWidth(); x++) {
-      for (int y = 0; y < contrastImage.getHeight(); y++) {
-        int pixel = (int)(contrastImage.getRGB(x, y) & 0xFF);
-        if (pixel > averagePixel) {
-          pixel = 255;
-        } else {
-          pixel = 0;
-        }
-        int argb = (255<<24) | (pixel << 16) | (pixel << 8) | pixel;
-        contrastImage.setRGB(x, y, argb);
+    for (int x = 0; x < temp.getWidth(); x++) {
+      for (int y = 0; y < temp.getHeight(); y++) {
+        averagePixel += (int)(temp.getRGB(x, y) & 0xFF);
       }
     }
 
-    return contrastImage; 
+    averagePixel /= (temp.getWidth() * temp.getHeight());
+
+    for (int x = 0; x < temp.getWidth(); x++) {
+      for (int y = 0; y < temp.getHeight(); y++) {
+        int pixel = (int)(temp.getRGB(x, y) & 0xFF);
+        if (pixel > averagePixel) {
+          processedImage.setRGB(x, y, Color.WHITE.getRGB());
+        } else {
+          processedImage.setRGB(x, y, Color.BLACK.getRGB());
+        }
+      }
+    }
+
+    return processedImage; 
   }
 
   /**
@@ -131,13 +138,12 @@ public class ImageProcessing {
    * @param img The image to detect edges in.
    * @return The edge-detected image.
    */
-  public BufferedImage edgeDetect(BufferedImage img) {
+  public BufferedImage edgeDetect(BufferedImage img, int threshold) {
     BufferedImage edgeImage = new BufferedImage(img.getWidth(), img.getHeight(), BufferedImage.TYPE_BYTE_GRAY);
     int[][] vertDetect = new int[img.getWidth()][img.getHeight()]; 
     int[][] horizDetect = new int[img.getWidth()][img.getHeight()];
     int[][] edgeDetect = new int[img.getWidth()][img.getHeight()];
     int pixel = 0;
-    int threshold = 15; 
 
     for (int x = 1; x < img.getWidth() - 1; x++) {
       for (int y = 1; y < img.getHeight() - 1; y++) {
@@ -173,18 +179,36 @@ public class ImageProcessing {
   /**
    * Resizes current image to desired width and height.
    * @param img The image to resize.
-   * @param width The desired width.
-   * @param height The desired height.
+   * @param maxSide The maximum side length of the image.
    * @return The resized image.
    */
-  public BufferedImage resize(BufferedImage img, int width, int height) {
-    Image tmp = img.getScaledInstance(width, height, Image.SCALE_SMOOTH);
-    BufferedImage resizedImage = new BufferedImage(width, height, BufferedImage.TYPE_BYTE_GRAY);
+  public BufferedImage resize(BufferedImage img, int maxSide) {
+    int width;
+    int height;
 
-    Graphics2D converter = resizedImage.createGraphics();
-    converter.drawImage(tmp, 0, 0, null);
-    converter.dispose();
+    if (maxSide < img.getWidth() || maxSide < img.getHeight()) {
+      if (img.getWidth() > img.getHeight()) {
+        int difference = maxSide - img.getWidth();
+        width = maxSide;
+        height = img.getHeight() + difference * img.getHeight() / img.getWidth();
+      } else if (img.getWidth() < img.getHeight()) {
+        int difference = maxSide - img.getHeight();
+        height = maxSide;
+        width = img.getWidth() + difference * img.getWidth() / img.getHeight();
+      } else {
+        width = maxSide;
+        height = maxSide;
+      }
+    } else {
+      throw new IllegalArgumentException("Image is already smaller than the desired size.");
+    }
 
+    BufferedImage resizedImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+    Graphics2D g = resizedImage.createGraphics();
+    g.drawImage(img, 0, 0, width, height, null);
+    g.dispose();
+
+    System.out.println("Resized");
     return resizedImage;
   }
 
