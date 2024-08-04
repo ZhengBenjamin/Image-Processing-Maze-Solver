@@ -1,4 +1,7 @@
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Graphics; // Add this import statement
+import java.awt.event.*;
 import java.awt.image.*;
 import java.io.File;
 import java.io.IOException;
@@ -6,262 +9,301 @@ import javax.imageio.*;
 import javax.swing.*;
 
 public class UI {
+  
+  private JFrame window = new JFrame();
+  private JFrame solutionFrame; 
+  private ImageProcessing imageProcessor = new ImageProcessing();
+  private MazeSolver solver;
 
-  private final JFrame window;
-  private final ImageProcessing imageProcessor = new ImageProcessing(); 
-  private MazeSolver solver; 
-  private BufferedImage originalImage; 
+  private BufferedImage originalImage;
   private BufferedImage processedImage; 
-  private BufferedImage edgeDetectImage; 
-  private BufferedImage markedImage; 
-  private JPanel imagePanel; 
-  private int[] startingPoint = new int[]{0, 0};
-  private int[] endingPoint = new int[]{0, 0};
+  private BufferedImage markedImage;
 
-  private JFrame testFrame = new JFrame("Test"); 
-  private JLabel testLabel = new JLabel(); 
+  private JPanel images; // Panel for images (top)
+  private JPanel markings; // Panel for marking options (middle)
+  private JPanel buttons; // Panel for buttons (bottom)
+
+  private int[] startingPoint = null;
+  private int[] endingPoint = null;
 
   /**
-   * Constructor for the UI class.
+   * Constructor for the newUI class.
    */
   public UI() {
-    this.window = new JFrame("Image Recognition Maze Solver");
-
-    window.setSize(1600, 900);
+    window = new JFrame("Maze Solver");
+    window.setSize(200, 100);
     window.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
     renderStartingUI();
+    window.setLocationRelativeTo(null);
+    window.setVisible(true); 
   }
 
-  /**
-   * Sets the image to be solved
-   * @param img The image to be solved
-   */
-  public void setImage(BufferedImage img) {
+  private void setImage(BufferedImage img) {
     if (img.getWidth() > 900 || img.getHeight() > 900) {
-      this.originalImage = imageProcessor.resize(img, 900, 900);
+      this.originalImage = imageProcessor.resize(img, 900);
     } else {
-      this.originalImage = img; 
+      this.originalImage = img;
     }
-    edgeDetectImage = imageProcessor.contrastDetect(img);
-    renderImage(); 
+
+    processedImage = imageProcessor.contrastDetect(originalImage);
+    window.setSize(originalImage.getWidth() * 2 + 50, originalImage.getHeight() + 150);
+    window.setLocationRelativeTo(null);
   }
 
-  /**
-   * Gets the starting point of the maze.
-   * @return The starting point of the maze.
-   */
-  public int[] getStartingPoint() {
-    return startingPoint;
-  }
+  // Render Methods 
 
   /**
-   * Gets the ending point of the maze.
-   * @return The ending point of the maze.
-   */
-  public int[] getEndingPoint() {
-    return endingPoint;
-  }
-
-  /**
-   * Renders the starting UI. Prompts user to select an image.
+   * Renders a button to the user to open an image.
    */
   private void renderStartingUI() {
-    JPanel loadImage = new JPanel();
-    JButton loadButton = new JButton("Load Image");
-
-    loadImage.add(loadButton);
-    window.add(loadImage, BorderLayout.NORTH);
-    window.setVisible(true);
-
-    loadButton.addActionListener(e -> {
-      JFileChooser fileChooser = new JFileChooser();
-      fileChooser.showOpenDialog(null);
-      File file = fileChooser.getSelectedFile();
-      BufferedImage img = null;
-
-      try {
-        img = ImageIO.read(file);
-      } catch (IOException ex) {
-        System.out.println("Error: " + ex);
-      }
-
-      window.remove(loadImage);
-      setImage(img);
-    });
-
+    buttons = new JPanel();
+    JButton openButton = new JButton("Open Image"); 
+    openButton.addActionListener(e -> handleOpenImage()); 
+    
+    buttons.add(openButton);
+    window.add(buttons);
   }
 
   /**
-   * Renders the starting UI.
+   * Renders both the original image and processed/marked image to the user in a side-by-side format.
    */
-  private void renderButtons() {
-    JPanel buttonPanel = new JPanel(); // Panel for buttons
-    JButton solveButton = new JButton("Solve Maze"); // Button to solve the maze
-    JButton resetButton = new JButton("Reset Maze"); // Button to reset the maze
-    JButton changeMazeImage = new JButton("Change"); // Button to change the maze image
-
-    changeMazeImage.addActionListener(e -> { // Change the maze image
-      JFileChooser fileChooser = new JFileChooser();
-      fileChooser.showOpenDialog(null);
-      File file = fileChooser.getSelectedFile();
-      BufferedImage img = null;
-
-      try {
-        img = ImageIO.read(file);
-      } catch (IOException ex) {
-        System.out.println("Error: " + ex);
-      }
-
-      setImage(img);
-      });
-
-    solveButton.addActionListener(e -> { // Solves the maze 
-      int[][] coordPath = null;
-      int pixelSize = 3; 
-      
-      while (coordPath == null && pixelSize >= 1) {
-        solver = new MazeSolver(edgeDetectImage, pixelSize, startingPoint, endingPoint);
-        coordPath = solver.solve(); 
-        pixelSize -= 1;
-      }
-      
-      try {
-        renderSolution(solver.solve());
-      } catch (NullPointerException ex) {
-        System.out.println("No solution found");
-      }
-    });
-
-    resetButton.addActionListener(e -> { // Resets the maze 
-      setImage(originalImage);
-      markedImage = null;
-      startingPoint = new int[]{0, 0};
-      endingPoint = new int[]{0, 0};
-    });
-
-    buttonPanel.add(solveButton);
-    buttonPanel.add(resetButton);
-    buttonPanel.add(changeMazeImage);
-    window.add(buttonPanel, BorderLayout.SOUTH);
-  }
-
-  /**
-   * Displays an image in a window using a JFrame.
-   */
-  private void renderImage() { 
-    if (imagePanel != null) { // Removes the previous image if it exists
-      window.remove(imagePanel);
+  private void renderImage() {
+    if (images != null) {
+      window.remove(images);
     }
 
-    imagePanel = new JPanel();
-    JLabel originalLabel = new JLabel();
-    JLabel processedLabel = new JLabel();
-    JLabel markedLabel = new JLabel();
+    images = new JPanel();
 
-    imagePanel.setBackground(Color.RED);
-    originalLabel.setIcon(new ImageIcon(originalImage));
+    JLabel ogImgLabel = new JLabel(new ImageIcon(originalImage)); 
+    JLabel processedImgLabel; 
     
-    imagePanel.add(originalLabel);
-    if (markedImage != null) {
-      markedLabel.setIcon(new ImageIcon(markedImage));
-      imagePanel.add(markedLabel);
+    if (markedImage != null) { // If the image has been marked, display the marked image.
+      processedImgLabel = new JLabel(new ImageIcon(markedImage)); 
       System.out.println("Marked Image");
     } else {
-      processedLabel.setIcon(new ImageIcon(edgeDetectImage));
-      imagePanel.add(processedLabel);
-      System.out.println("Processed Image");
+      processedImgLabel = new JLabel(new ImageIcon(processedImage)); 
     }
 
-    window.add(imagePanel, BorderLayout.NORTH);
-    renderButtons();
-    promptSelectPoints();
+    images.add(ogImgLabel);
+    images.add(processedImgLabel);
+
+    window.add(images, BorderLayout.NORTH);
     window.repaint();
     window.revalidate();
   }
 
-  /**
-   * Prompts the user with sliders representing the starting and ending points of the maze 
-   */
-  private void promptSelectPoints() {
-    JPanel selectPoints = new JPanel(); 
-    JSlider startingX = new JSlider(0, edgeDetectImage.getWidth() - 1, startingPoint[0]);
-    JSlider startingY = new JSlider(0, edgeDetectImage.getHeight() - 1, startingPoint[1]);
-    JSlider endingX = new JSlider(0, edgeDetectImage.getWidth() - 1, endingPoint[0]);
-    JSlider endingY = new JSlider(0, edgeDetectImage.getHeight() - 1, endingPoint[1]);
-    JCheckBox useEdgeDetection = new JCheckBox("Use Edge Detection (For Photos)");
-
-    selectPoints.add(startingX);
-    selectPoints.add(startingY);
-    selectPoints.add(endingX);
-    selectPoints.add(endingY);
-    selectPoints.add(useEdgeDetection);
-    window.add(selectPoints, BorderLayout.CENTER);
-
-    startingX.addChangeListener(e -> {
-      startingPoint[0] = startingX.getValue();
-      renderSelectedPoints();
-    });
-
-    startingY.addChangeListener(e -> {
-      startingPoint[1] = startingY.getValue();
-      renderSelectedPoints();
-    });
-
-    endingX.addChangeListener(e -> {
-      endingPoint[0] = endingX.getValue();
-      renderSelectedPoints();
-    });
-
-    endingY.addChangeListener(e -> {
-      endingPoint[1] = endingY.getValue();
-      renderSelectedPoints();
-    });
-
-    useEdgeDetection.addActionListener(e -> {
-      if (useEdgeDetection.isSelected()) {
-        edgeDetectImage = imageProcessor.processImage(originalImage);
-      } else {
-        edgeDetectImage = imageProcessor.contrastDetect(originalImage);
-      }
-      renderImage();
-    });
-
-  }
-
-  /**
-   * Renders the selected points on the image
-   */
-  private void renderSelectedPoints() {
-    markedImage = new BufferedImage(edgeDetectImage.getWidth() + 10, edgeDetectImage.getHeight() + 10, BufferedImage.TYPE_INT_ARGB);
-    Graphics g = markedImage.getGraphics();
-    g.drawImage(edgeDetectImage, 0, 0, null);
-    g.dispose(); 
+  private void renderMarkingOptions() {
+    markings = new JPanel();
     
-    for (int x = startingPoint[0]; x < startingPoint[0] + 5; x++) {
-      for (int y = startingPoint[1]; y < startingPoint[1] + 5; y++) {
-        markedImage.setRGB(x, y, Color.GREEN.getRGB());
+    JPanel markingOptions = new JPanel(); 
+    JPanel info = new JPanel();
+    JPanel buttons = new JPanel();
+    JCheckBox useEdgeDetect = new JCheckBox("Use Edge Detection");
+    JSlider edgeDetectThreshold = new JSlider(0, 20, 10);
+    JButton setEndpoints = new JButton("Set Endpoints");
+    JButton reset = new JButton("Reset");
+    JButton quickSolve = new JButton("Quick Solve");
+    JButton accurateSolve = new JButton("Accurate Solve");
+    JLabel detectionMethod = new JLabel("Detection Method: Contrast Detection");
+    JLabel threshold = new JLabel("Threshold: 10");
+
+    markings.setLayout(new BoxLayout(markings, BoxLayout.Y_AXIS));
+    info.add(detectionMethod);
+    markingOptions.add(useEdgeDetect);
+    buttons.add(setEndpoints);
+    buttons.add(reset);
+    buttons.add(quickSolve);
+    buttons.add(accurateSolve);
+    markings.add(info);
+    markings.add(markingOptions);
+    markings.add(buttons);
+
+    window.add(markings, BorderLayout.CENTER);
+
+    useEdgeDetect.addActionListener(e -> {
+      if (useEdgeDetect.isSelected()) {
+        markedImage = imageProcessor.processImage(originalImage, edgeDetectThreshold.getValue());
+        markingOptions.add(edgeDetectThreshold);
+        info.add(threshold);
+        detectionMethod.setText("Detection Method: Edge Detection          ");
+      } else {
+        markedImage = imageProcessor.contrastDetect(originalImage); 
+        detectionMethod.setText("Detection Method: Contrast Detection");
+        try {
+          markingOptions.remove(edgeDetectThreshold);
+          info.remove(threshold);
+        } catch (Exception ex) {
+        }
       }
-    }
+      renderImage(); 
+    });
 
-    for (int x = endingPoint[0]; x < endingPoint[0] + 5; x++) {
-      for (int y = endingPoint[1]; y < endingPoint[1] + 5; y++) {
-        markedImage.setRGB(x, y, Color.RED.getRGB());
+    edgeDetectThreshold.addChangeListener(e -> {
+      if (edgeDetectThreshold.getValueIsAdjusting() == false) {
+        markedImage = imageProcessor.processImage(originalImage, edgeDetectThreshold.getValue());
+        renderImage(); 
       }
-    }
+    });
 
-    markedImage.setRGB(startingPoint[0], startingPoint[1], Color.GREEN.getRGB());
-    markedImage.setRGB(endingPoint[0], endingPoint[1], Color.RED.getRGB());
-
-    System.out.println("Starting Point: " + startingPoint[0] + " , " + startingPoint[1] + " Ending Point: " + endingPoint[0] + " , " + endingPoint[1]);
-
-    renderImage(); 
+    quickSolve.addActionListener(e -> handleSolve()); 
+    accurateSolve.addActionListener(e -> handleAccurateSolve());
+    setEndpoints.addActionListener(e -> renderSetEndpoints());
+    reset.addActionListener(e -> handleReset());
   }
-  
+
+  private void renderSetEndpoints() {
+    JFrame selectPoints = new JFrame();
+    JLabel image = new JLabel(new ImageIcon(originalImage));
+    JLabel instructions = new JLabel("Select the starting point");
+
+    markedImage = null;
+    startingPoint = null;
+    endingPoint = null;
+
+    selectPoints.setSize(originalImage.getWidth(), originalImage.getHeight() + 100);
+    selectPoints.add(image, BorderLayout.NORTH);
+    selectPoints.add(instructions, BorderLayout.SOUTH);
+    selectPoints.setLocationRelativeTo(null);
+    selectPoints.setVisible(true);
+
+    image.addMouseListener(new MouseAdapter() {
+      @Override
+      public void mouseClicked(MouseEvent e) {
+        if (startingPoint == null) {
+          try {
+            startingPoint = new int[2];
+            startingPoint[0] = e.getX();
+            startingPoint[1] = e.getY();
+            instructions.setText("Select the ending point");
+            markedImage = markImage(processedImage, startingPoint[0], startingPoint[1], "start");
+            image.setIcon(new ImageIcon(markImage(originalImage, startingPoint[0], startingPoint[1], "start")));
+            selectPoints.repaint();
+            selectPoints.revalidate();
+          } catch (Exception ex) {
+            renderPopUp("Invalid point selected / Too close to edges.");
+          }
+        } else {
+          try {
+            endingPoint = new int[2];
+            endingPoint[0] = e.getX();
+            endingPoint[1] = e.getY();
+            markedImage = markImage(markedImage, endingPoint[0], endingPoint[1], "end");
+            renderImage();
+            selectPoints.dispose();
+          } catch (Exception ex) {
+            renderPopUp("Invalid point selected / Too close to edges.");
+          }
+        }
+      }
+    });
+  }
+
+
+  /**
+   * Renders a pop-up message to the user with a message; 
+   * @param message The message to be displayed.
+   */
+  private void renderPopUp(String message) {
+    JOptionPane.showMessageDialog(window, message);
+  }
+
+  // Event Handlers 
+
+  /**
+   * Handles the opening of an iamge.
+   */
+  private void handleOpenImage() { 
+    JFileChooser fileChooser = new JFileChooser();
+    fileChooser.showOpenDialog(null);
+    File file = fileChooser.getSelectedFile();
+    try {
+      BufferedImage img = ImageIO.read(file);
+      setImage(img);
+      renderImage(); 
+      renderMarkingOptions(); 
+
+      window.remove(buttons);
+      window.repaint();
+      window.revalidate();
+    } catch (IOException ex) {
+      renderPopUp("Unable to load image / Invalid image format.");
+    }
+  }
+
+  private void handleReset() {
+    window.dispose();
+    window = new JFrame("Maze Solver"); 
+    startingPoint = null;
+    endingPoint = null;
+    markedImage = null;
+    originalImage = null;
+    processedImage = null;
+    window.setSize(200, 100);
+    window.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+    renderStartingUI();
+    window.setLocationRelativeTo(null);
+    window.setVisible(true);
+  }
+
+  /**
+   * Calls MazeSolver to solve the maze starting with a pixel size of 3.
+   */
+  private void handleSolve() {
+    if (startingPoint == null || endingPoint == null) {
+      renderPopUp("Please select both a starting and ending point.");
+      return;
+    }
+
+    solutionFrame = new JFrame("Solving... This might take a while");
+    solutionFrame.setSize(400, 0);
+    solutionFrame.setLocationRelativeTo(null);
+    solutionFrame.setVisible(true);
+
+    int[][] solutionCoords = null; 
+    int pixelSize = 3; 
+
+    while (solutionCoords == null && pixelSize >= 1) {
+      solver = new MazeSolver(processedImage, pixelSize, startingPoint, endingPoint);
+      solutionCoords = solver.solve(); 
+      pixelSize -= 1; 
+    }
+    
+    try {
+      renderSolution(solver.solve());
+    } catch (NullPointerException ex) {
+      renderPopUp("No solution found.");
+      solutionFrame.dispose();
+    }   
+  }
+
+  /**
+   * Calls MazeSolver to solve the maze with pixel size of 1.
+   */
+  private void handleAccurateSolve() {
+    if (startingPoint == null || endingPoint == null) {
+      renderPopUp("Please select both a starting and ending point.");
+      return;
+    } 
+
+    solutionFrame = new JFrame("Solving... Finding the most accurate path takes longer than the quick solve.");
+    solutionFrame.setSize(700, 0);
+    solutionFrame.setLocationRelativeTo(null);
+    solutionFrame.setVisible(true);
+
+    solver = new MazeSolver(processedImage, 1, startingPoint, endingPoint);
+
+    try {
+      renderSolution(solver.solve());
+    } catch (NullPointerException ex) {
+      renderPopUp("No solution found.");
+    }
+  }
+
   /**
    * Renders the solution to the maze 
    */
   private void renderSolution(int[][] solutionCoords) {
-    BufferedImage solutionImage = new BufferedImage(edgeDetectImage.getWidth(), edgeDetectImage.getHeight(), BufferedImage.TYPE_INT_ARGB);
+    BufferedImage solutionImage = new BufferedImage(originalImage.getWidth(), originalImage.getHeight(), BufferedImage.TYPE_INT_ARGB);
     Graphics g = solutionImage.getGraphics();
     g.drawImage(originalImage, 0, 0, null);
     g.dispose();
@@ -274,24 +316,44 @@ public class UI {
       }
     }
 
-    renderImage(solutionImage);
+    solutionFrame.dispose();
+    solutionFrame = new JFrame();
+    JLabel solutionLabel = new JLabel(new ImageIcon(solutionImage));
+
+    solutionFrame.setSize(originalImage.getWidth(), originalImage.getHeight());
+    solutionFrame.add(solutionLabel);
+    solutionFrame.setLocationRelativeTo(null);
+    solutionFrame.setVisible(true);
   }
 
   /**
-   * Helper method to render an image in a JFrame.
-   * @param img The image to render.
+   * Helper method to mark a point on an image.
+   * @param img The image to mark.
+   * @param x The x-coordinate of the point to mark.
+   * @param y The y-coordinate of the point to mark.
+   * @param pointType The type of point to mark.
+   * @return The marked image.
    */
-  private void renderImage(BufferedImage img) {
-    testFrame.remove(testLabel);
-    testFrame.setSize(img.getWidth(), img.getHeight());
-    testLabel = new JLabel(); 
-    testLabel.setIcon(new ImageIcon(img));
-    testFrame.add(testLabel);
-    testFrame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-    testFrame.repaint();
-    testFrame.revalidate();
-    testFrame.setVisible(true);
-  }
+  private BufferedImage markImage(BufferedImage img, int x, int y, String pointType) {
+    BufferedImage markedImage = new BufferedImage(img.getWidth(), img.getHeight(), BufferedImage.TYPE_INT_ARGB);
+    Graphics g = markedImage.createGraphics();
+    g.drawImage(img, 0, 0, null);
+    g.dispose(); 
 
-  
+    int color;
+
+    switch (pointType) {
+      case "start" -> color = Color.GREEN.getRGB();
+      case "end" -> color = Color.RED.getRGB();
+      default -> throw new IllegalArgumentException("Invalid point type.");
+    }
+
+    for (int xPix = x - 2; xPix <= x + 2; xPix++) {
+      for (int yPix = y - 2; yPix <= y + 2; yPix++) {
+        markedImage.setRGB(xPix, yPix, color);
+      }
+    }
+
+    return markedImage;
+  }
 }
