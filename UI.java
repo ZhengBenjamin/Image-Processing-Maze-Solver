@@ -12,12 +12,12 @@ public class UI {
   
   private JFrame window = new JFrame();
   private JFrame solutionFrame; 
-  private ImageProcessing imageProcessor = new ImageProcessing();
+  private final ImageProcessing imageProcessor = new ImageProcessing();
   private MazeSolver solver;
 
-  private BufferedImage originalImage;
-  private BufferedImage processedImage; 
-  private BufferedImage markedImage;
+  private BufferedImage originalImage; // Original image
+  private BufferedImage processedImage; // Processed image
+  private BufferedImage markedImage; // Image with start / end markings
 
   private JPanel images; // Panel for images (top)
   private JPanel markings; // Panel for marking options (middle)
@@ -38,6 +38,10 @@ public class UI {
     window.setVisible(true); 
   }
 
+  /**
+   * Sets the image to be solved
+   * @param img The image to be displayed.
+   */
   private void setImage(BufferedImage img) {
     if (img.getWidth() > 900 || img.getHeight() > 900) {
       this.originalImage = imageProcessor.resize(img, 900);
@@ -92,6 +96,9 @@ public class UI {
     window.revalidate();
   }
 
+  /**
+   * Renders the marking options to the user.
+   */
   private void renderMarkingOptions() {
     markings = new JPanel();
     
@@ -152,6 +159,9 @@ public class UI {
     reset.addActionListener(e -> handleReset());
   }
 
+  /**
+   * Renders the set endpoints UI to the user.
+   */
   private void renderSetEndpoints() {
     JFrame selectPoints = new JFrame();
     JLabel image = new JLabel(new ImageIcon(originalImage));
@@ -170,9 +180,9 @@ public class UI {
     image.addMouseListener(new MouseAdapter() {
       @Override
       public void mouseClicked(MouseEvent e) {
-        if (startingPoint == null) {
+        if (startingPoint == null) { 
           try {
-            startingPoint = new int[2];
+            startingPoint = new int[2]; 
             startingPoint[0] = e.getX();
             startingPoint[1] = e.getY();
             instructions.setText("Select the ending point");
@@ -231,6 +241,9 @@ public class UI {
     }
   }
 
+  /**
+   * Handles reseting the program
+   */
   private void handleReset() {
     window.dispose();
     window = new JFrame("Maze Solver"); 

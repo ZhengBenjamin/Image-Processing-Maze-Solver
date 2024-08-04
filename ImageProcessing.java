@@ -23,11 +23,12 @@ public class ImageProcessing {
     BufferedImage processedImage = img;
     processedImage = greyScale(processedImage);
 
+
+    processedImage = gaussianBlur3(processedImage);
+    processedImage = gaussianBlur5(gaussianBlur5(processedImage));
     if (img.getWidth() > 900 || img.getHeight() > 900) {
       processedImage = resize(processedImage, 900);   
     }
-    processedImage = gaussianBlur3(processedImage);
-    processedImage = gaussianBlur5(gaussianBlur5(processedImage));
 
     System.out.println("Processed Edge Detection");
     return processedImage;

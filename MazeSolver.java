@@ -4,9 +4,9 @@ import java.util.*;
 public class MazeSolver {
 
   private class Node{
-    private int x;
-    private int y;
-    private ArrayList<Node> neighbors = new ArrayList<>();
+    private final int x;
+    private final int y;
+    private final ArrayList<Node> neighbors = new ArrayList<>();
     
     /**
      * Constructor for the Node class.
@@ -183,6 +183,10 @@ public class MazeSolver {
     System.out.println("Ending Point: " + Integer.toString(endingPoint[0]) + " , " + Integer.toString(endingPoint[1]));
   }
 
+  /**
+   * Called from UI to solve the maze.
+   * @return The path from the starting node to the ending node.
+   */
   public int[][] solve() {
     Node[] prev = findPath();
     ArrayList<Node> nodePath = reconstructPath(prev);
@@ -201,6 +205,10 @@ public class MazeSolver {
     return null;
   }
 
+  /**
+   * Finds the path from the starting node to the ending node.
+   * @return The path from the starting node to the ending node.
+   */
   private Node[] findPath() {
     Queue<Node> queue = new LinkedList<>(); //Queue to store nodes to visit
     HashSet<Node> visited = new HashSet<>(); //Set to store visited nodes
@@ -209,7 +217,7 @@ public class MazeSolver {
     Node[] prev = new Node[nodes.size()]; //Array to store the previous node in the path
     Arrays.fill(prev, null); //Fill the array with nulls
 
-    while (!queue.isEmpty()) {
+    while (!queue.isEmpty()) { //Modified BFS to find the path
       Node current = queue.remove();
       for (Node neighbor : current.getNeighbors()) {
         if (!visited.contains(neighbor)) {
@@ -228,8 +236,13 @@ public class MazeSolver {
     return prev;
   }
 
+  /**
+   * Reconstructs the path from the starting node to the ending node.
+   * @param prev The array containing the previous node in the path.
+   * @return The path from the starting node to the ending node.
+   */
   private ArrayList<Node> reconstructPath(Node[] prev) {
-    ArrayList<Node> path = new ArrayList(); 
+    ArrayList<Node> path = new ArrayList<>(); 
     for (Node at = endingNode; at != null; at = prev[nodes.indexOf(at)]) {
       path.add(at);
     }
@@ -282,7 +295,7 @@ public class MazeSolver {
   }
 
   private void setNeighbors() {
-    Node[] nodeArray = nodes.toArray(new Node[nodes.size()]); //Converts the list of nodes to an array
+    Node[] nodeArray = nodes.toArray(Node[]::new); //Converts the list of nodes to an array
     int offsetIndex = (int) Math.floor(img.getHeight() / pixelSize) - 1; //The offset index to get the node to the right of the current node
 
     for (int i = 0; i < nodeArray.length; i++) {
@@ -293,19 +306,14 @@ public class MazeSolver {
       }
     }
     
-    nodes = new ArrayList<Node>(Arrays.asList(nodeArray));
+    nodes = new ArrayList<>(Arrays.asList(nodeArray));
     System.out.println("Set Neighbors: num of nodes: " + Integer.toString(nodes.size()));
   }
 
+  /**
+   * Helper method to print the neighbors of each node.
+   */
   private void printNeighbors() {
-    // for (Node node : nodes) {
-    //   System.out.println("Node: " + Integer.toString(node.getX()) + " , " + Integer.toString(node.getY()) + " Index: " + Integer.toString(nodes.indexOf(node)));
-    //   for (Node neighbor : node.getNeighbors()) {
-    //     System.out.println("  Neighbor: " + Integer.toString(neighbor.getX()) + " , " + Integer.toString(neighbor.getY()));
-    //   }
-    // }
-    // System.out.println("Resolution: " + Integer.toString(img.getWidth()) + " , " + Integer.toString(img.getHeight()));
-
     nodes.forEach(node -> System.out.println("Node: " + Integer.toString(node.getX()) + " , " + Integer.toString(node.getY()) + " Neighbors " + Integer.toString(node.getNeighbors().size())));
   }
 }
