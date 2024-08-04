@@ -141,6 +141,7 @@ public class UI {
     edgeDetectThreshold.addChangeListener(e -> {
       if (edgeDetectThreshold.getValueIsAdjusting() == false) {
         markedImage = imageProcessor.processImage(originalImage, edgeDetectThreshold.getValue());
+        threshold.setText("Threshold: " + Integer.toString(edgeDetectThreshold.getValue()));
         renderImage(); 
       }
     });

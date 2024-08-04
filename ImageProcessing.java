@@ -6,7 +6,7 @@ public class ImageProcessing {
   public BufferedImage processImage(BufferedImage img, int edgeDetectThreshold) {
     BufferedImage processedImage = img;
     processedImage = greyScale(processedImage);
-    processedImage = gaussianBlur5(processedImage);
+    processedImage = gaussianBlur5(gaussianBlur5(processedImage));
 
     if (img.getWidth() > 900 || img.getHeight() > 900) {
       processedImage = resize(processedImage, 900);   
@@ -19,11 +19,17 @@ public class ImageProcessing {
     return processedImage;
   }
 
-  public BufferedImage preprocessImage(BufferedImage img) {
-    BufferedImage processedImage = gaussianBlur5(img);
-    processedImage = gaussianBlur3(processedImage);
+  public BufferedImage preprocessImage(BufferedImage img, int edgeDetectThreshold) {
+    BufferedImage processedImage = img;
     processedImage = greyScale(processedImage);
-    processedImage = resize(processedImage, 900);
+
+    if (img.getWidth() > 900 || img.getHeight() > 900) {
+      processedImage = resize(processedImage, 900);   
+    }
+    processedImage = gaussianBlur3(processedImage);
+    processedImage = gaussianBlur5(gaussianBlur5(processedImage));
+
+    System.out.println("Processed Edge Detection");
     return processedImage;
   }
 
