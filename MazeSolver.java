@@ -251,7 +251,7 @@ public class MazeSolver {
    * @return The node generated.
    */
   private Node genXNodes(int x, int y, Node neighbor) {
-      if (x + pixelSize < img.getWidth() - 1) {
+      if (x + pixelSize < img.getWidth() - pixelSize) {
         Node node = new Node(x + pixelSize, y);
         node.addNeighbor(neighbor);
         node.addNeighbor(genXNodes(x + pixelSize, y, node));
@@ -262,50 +262,50 @@ public class MazeSolver {
       }
     }
 
-    /**
-     * Generates nodes in the positive Y direction.
-     * @param x The x-coordinate of the node.
-     * @param y The y-coordinate of the node.
-     * @param neighbor The neighbor of the node.
-     * @return The node generated.
-     */
-    private Node genYNodes(int x, int y, Node neighbor) {
-      if (y + pixelSize < img.getHeight() - 1) {
-        Node node = new Node(x, y + pixelSize);
-        node.addNeighbor(neighbor);
-        node.addNeighbor(genYNodes(x, y + pixelSize, node));
-        nodes.add(node);
-        return node; 
-      } else {
-        return null;
+  /**
+   * Generates nodes in the positive Y direction.
+   * @param x The x-coordinate of the node.
+   * @param y The y-coordinate of the node.
+   * @param neighbor The neighbor of the node.
+   * @return The node generated.
+   */
+  private Node genYNodes(int x, int y, Node neighbor) {
+    if (y + pixelSize < img.getHeight() - pixelSize) {
+      Node node = new Node(x, y + pixelSize);
+      node.addNeighbor(neighbor);
+      node.addNeighbor(genYNodes(x, y + pixelSize, node));
+      nodes.add(node);
+      return node; 
+    } else {
+      return null;
+    }
+  }
+
+  private void setNeighbors() {
+    Node[] nodeArray = nodes.toArray(new Node[nodes.size()]); //Converts the list of nodes to an array
+    int offsetIndex = (int) Math.floor(img.getHeight() / pixelSize) - 1; //The offset index to get the node to the right of the current node
+
+    for (int i = 0; i < nodeArray.length; i++) {
+      Node node = nodeArray[i];
+      if (node.getY() != 0 && i + offsetIndex < nodeArray.length) {
+        node.addNeighbor(nodeArray[i + offsetIndex]);
+        nodeArray[i + offsetIndex].addNeighbor(node);
       }
     }
+    
+    nodes = new ArrayList<Node>(Arrays.asList(nodeArray));
+    System.out.println("Set Neighbors: num of nodes: " + Integer.toString(nodes.size()));
+  }
 
-    private void setNeighbors() {
-      Node[] nodeArray = nodes.toArray(new Node[nodes.size()]); //Converts the list of nodes to an array
-      int offsetIndex = (int) Math.floor(img.getHeight() / pixelSize) - 1; //The offset index to get the node to the right of the current node
+  private void printNeighbors() {
+    // for (Node node : nodes) {
+    //   System.out.println("Node: " + Integer.toString(node.getX()) + " , " + Integer.toString(node.getY()) + " Index: " + Integer.toString(nodes.indexOf(node)));
+    //   for (Node neighbor : node.getNeighbors()) {
+    //     System.out.println("  Neighbor: " + Integer.toString(neighbor.getX()) + " , " + Integer.toString(neighbor.getY()));
+    //   }
+    // }
+    // System.out.println("Resolution: " + Integer.toString(img.getWidth()) + " , " + Integer.toString(img.getHeight()));
 
-      for (int i = 0; i < nodeArray.length; i++) {
-        Node node = nodeArray[i];
-        if (node.getY() != 0 && i + offsetIndex < nodeArray.length) {
-          node.addNeighbor(nodeArray[i + offsetIndex]);
-          nodeArray[i + offsetIndex].addNeighbor(node);
-        }
-      }
-      
-      nodes = new ArrayList<Node>(Arrays.asList(nodeArray));
-      System.out.println("Set Neighbors: num of nodes: " + Integer.toString(nodes.size()));
-    }
-
-    private void printNeighbors() {
-      // for (Node node : nodes) {
-      //   System.out.println("Node: " + Integer.toString(node.getX()) + " , " + Integer.toString(node.getY()) + " Index: " + Integer.toString(nodes.indexOf(node)));
-      //   for (Node neighbor : node.getNeighbors()) {
-      //     System.out.println("  Neighbor: " + Integer.toString(neighbor.getX()) + " , " + Integer.toString(neighbor.getY()));
-      //   }
-      // }
-      // System.out.println("Resolution: " + Integer.toString(img.getWidth()) + " , " + Integer.toString(img.getHeight()));
-
-      nodes.forEach(node -> System.out.println("Node: " + Integer.toString(node.getX()) + " , " + Integer.toString(node.getY()) + " Neighbors " + Integer.toString(node.getNeighbors().size())));
-    }
+    nodes.forEach(node -> System.out.println("Node: " + Integer.toString(node.getX()) + " , " + Integer.toString(node.getY()) + " Neighbors " + Integer.toString(node.getNeighbors().size())));
+  }
 }
