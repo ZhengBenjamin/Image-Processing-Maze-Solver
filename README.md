@@ -34,3 +34,6 @@ The `MazeSolver` class is responsible for interpreting the processed image as a 
 ![Screenshot 2024-08-04 at 3 46 36 PM](https://github.com/user-attachments/assets/fcb83dc0-c9c4-4ce8-8585-3843e3ebf884)
 ![Screenshot 2024-08-04 at 3 43 00 PM](https://github.com/user-attachments/assets/75d5ca17-b2c9-403f-a395-6e1bccdc2ba8)
 
+#### How to Run
+
+Compile and run `Main.java` to start the program. 
