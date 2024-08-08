@@ -153,8 +153,20 @@ public class UI {
       }
     });
 
-    quickSolve.addActionListener(e -> handleSolve()); 
-    accurateSolve.addActionListener(e -> handleAccurateSolve());
+    quickSolve.addActionListener(e -> {
+      try {
+        handleSolve();
+      } catch (Exception ex) {
+        renderPopUp("Error solving maze, select a point away from the maze walls");
+      }}); 
+
+    accurateSolve.addActionListener(e -> {
+      try {
+        handleSolve();
+      } catch (Exception ex) {
+        renderPopUp("Error solving maze, select a point away from the maze walls");
+      }}); 
+
     setEndpoints.addActionListener(e -> renderSetEndpoints());
     reset.addActionListener(e -> handleReset());
   }
